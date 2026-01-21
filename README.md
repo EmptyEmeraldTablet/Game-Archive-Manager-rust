@@ -50,7 +50,6 @@ D:\Games\The Binding of Isaac Rebirth\Profile\ALI213\Saves
 
 **注意事项：**
 - path.txt 必须是**单行**，不要有回车或空格
-- 建议不要将程序放在 C 盘，避免权限问题
 - 建议关闭 Steam 云存档
 
 ### 3. 运行
