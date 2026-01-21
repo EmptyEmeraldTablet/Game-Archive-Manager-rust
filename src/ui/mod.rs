@@ -50,62 +50,100 @@ pub fn clear_screen() {
     io::stdout().flush().unwrap();
 }
 
+pub fn print_version() {
+    msg_suc("==================== Game Archive Manager v1.0 ====================");
+}
+
 pub fn print_title() {
     clear_screen();
-    msg_suc("==================== Game Archive Manager ====================");
-    msg_suc("================= 初次使用请使用 help 或 h 查看帮助 =================\n");
+    print_version();
+    msg_suc("输入 help 或 h 查看帮助，输入 q 退出\n");
 }
 
 pub fn print_help() {
     println!();
-    msg_wrn("---------------------------------------------------------------");
-    msg_wrn("1. 本程序运行时会在程序所在目录下建立一个 Archive 文件夹用于存储日志文件和保存的存档");
-    msg_wrn("   请勿删除 (若删除, 则相当于恢复程序第一次运行的状态)");
-    msg_wrn("2. 建议将程序放在磁盘中的某个文件夹下, 再发送到桌面快捷方式使用");
-    msg_wrn("   (避免程序在桌面创建 Archive 文件夹后被误删)");
-    msg_wrn("3. 建议关闭 Steam 云存档");
-    msg_wrn("4. 请在正常保存、关闭后再进行存档");
-    msg_wrn("   (游戏进行中存档的话保存的是自动存档, 可能是几分钟前的存档, 并非保存时的存档)");
-    msg_wrn("5. 游戏进行中请勿读取存档");
-    msg_wrn("6. 随着游戏的进行, 每次存档所用的时间和占用的空间也会不断增大, 请耐心等待");
-    msg_suc("7. 不要把程序放在 C 盘或桌面, 不然程序没有权限往那里复制文件");
-    msg_wrn("---------------------------------------------------------------");
-    msg_suc("项目地址: https://github.com/yourusername/game-archive-manager");
+    msg_suc("【使用说明】");
     println!();
-}
-
-pub fn print_commands() {
-    set_color(Color::Blue);
-    println!("输入操作: (数字/命令/简写)");
+    println!("  本程序用于备份和恢复游戏存档");
+    println!("  配置文件: path.txt (需放在程序同级目录，内容为存档目录的绝对路径)");
+    println!();
+    msg_wrn("【注意事项】");
+    println!();
+    println!("  1. 程序会在同级目录创建 Archive 文件夹用于存储备份");
+    println!("  2. 请关闭游戏后再进行存档/读档操作");
+    println!("  3. 游戏进行中请勿读取存档");
+    println!("  4. 存档会随游戏进度逐渐增大，请耐心等待");
+    println!();
+    msg_suc("【命令列表】");
+    println!();
+    println!("  {:<20} {:<8} {}", "命令", "简写", "说明");
+    println!("  {:-<20} {:-<8} {:-}", "─", "─", "─");
 
     let commands = [
         ("quit", "q", "退出程序"),
-        ("help", "h", "帮助信息"),
+        ("help", "h", "显示帮助信息"),
         ("clearScreen", "cls", "清屏"),
         ("", "", ""),
-        ("save", "s", "保存存档"),
-        ("qsave", "qs", "快速保存"),
-        ("rsave", "rs", "覆盖式保存"),
+        ("save", "s", "保存存档 (需输入名称和备注)"),
+        ("qsave", "qs", "快速保存 (无需输入)"),
+        ("rsave", "rs", "覆盖保存 (更新最新存档)"),
         ("", "", ""),
-        ("load", "l", "读取存档"),
-        ("qload", "ql", "快速读取"),
+        ("load <id>", "l <id>", "读取指定存档"),
+        ("qload", "ql", "快速读取 (最新存档)"),
         ("log", "lo", "查看所有存档"),
-        ("slog", "sl", "近七次存档"),
+        ("slog", "sl", "查看最近7次存档"),
         ("", "", ""),
-        ("mArchive", "ma", "修改存档信息"),
-        ("delArch", "del", "删除指定存档"),
+        ("mArchive <id>", "ma <id>", "修改存档信息"),
+        ("delArch <id>", "del <id>", "删除指定存档"),
         ("qDelete", "qd", "删除最新存档"),
         ("", "", ""),
         ("usage", "use", "查看占用空间"),
     ];
 
-    for (i, (cmd, short, desc)) in commands.iter().enumerate() {
+    for (cmd, short, desc) in &commands {
         if cmd.is_empty() {
             println!();
         } else {
-            println!("{}. {:15} ({:3})  {}", i + 1, cmd, short, desc);
+            println!("  {:<20} {:<8} {}", cmd, short, desc);
         }
     }
+    println!();
+    msg_suc("【示例】");
+    println!();
+    println!("  保存存档: 输入 s 或 save，按提示操作");
+    println!("  读取存档: 输入 l 或 load，输入存档编号");
+    println!();
+}
 
+pub fn print_prompt() {
+    print!("> ");
+    io::stdout().flush().unwrap();
+}
+
+pub fn print_loading_prompt() {
+    print!("  正在加载...");
+    io::stdout().flush().unwrap();
+}
+
+pub fn print_success(msg: &str) {
+    msg_suc(&format!("  [成功] {}", msg));
+}
+
+pub fn print_error(msg: &str) {
+    msg_err(&format!("  [错误] {}", msg));
+}
+
+pub fn print_warning(msg: &str) {
+    msg_wrn(&format!("  [警告] {}", msg));
+}
+
+pub fn print_info(msg: &str) {
+    msg_log(&format!("  [信息] {}", msg));
+}
+
+pub fn print_confirm(msg: &str) {
+    set_color(Color::Yellow);
+    print!("  {} (y/n): ", msg);
+    io::stdout().flush().unwrap();
     set_color(Color::Reset);
 }
