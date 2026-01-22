@@ -1,5 +1,22 @@
-pub mod archive_info;
-pub mod archive_manager;
+//! 核心模块
+//!
+//! 提供 GAM 的核心数据结构和管理功能
 
-pub use archive_info::ArchiveInfo;
-pub use archive_manager::ArchiveManager;
+pub mod commands;
+pub mod error;
+pub mod ignore;
+pub mod store;
+pub mod types;
+
+pub use commands::{
+    handle_gc, handle_history, handle_ignore_add, handle_ignore_init, handle_ignore_list,
+    handle_init, handle_restore, handle_snapshot_info, handle_snapshot_list, handle_snapshot_save,
+    handle_status, handle_timeline_create, handle_timeline_delete, handle_timeline_list,
+    handle_timeline_switch,
+};
+pub use error::{GamError, GamResult};
+pub use ignore::IgnoreEngine;
+pub use types::{
+    Config, FileEntry, GamIgnoreConfig, IgnorePattern, PatternType, RetentionPolicy, Snapshot,
+    StorageStrategy, Timeline,
+};

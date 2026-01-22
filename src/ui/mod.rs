@@ -1,5 +1,14 @@
+//! UI 模块
+//!
+//! 提供命令行输出格式化功能
+
 use std::io::{self, Write};
 
+pub mod formatter;
+
+pub use formatter::Formatter;
+
+#[derive(Debug, Clone, Copy)]
 pub enum Color {
     Blue,
     Green,
@@ -51,7 +60,7 @@ pub fn clear_screen() {
 }
 
 pub fn print_version() {
-    msg_suc("==================== Game Archive Manager v1.0 ====================");
+    msg_suc("==================== Game Archive Manager v2.0 ====================");
 }
 
 pub fn print_title() {
@@ -64,54 +73,47 @@ pub fn print_help() {
     println!();
     msg_suc("【使用说明】");
     println!();
-    println!("  本程序用于备份和恢复游戏存档");
-    println!("  配置文件: path.txt (需放在程序同级目录，内容为存档目录的绝对路径)");
+    println!("  游戏存档版本控制系统 - 像 Git 一样管理游戏存档");
     println!();
     msg_wrn("【注意事项】");
     println!();
-    println!("  1. 程序会在同级目录创建 Archive 文件夹用于存储备份");
+    println!("  1. 程序会在游戏存档目录创建 .gam 目录");
     println!("  2. 请关闭游戏后再进行存档/读档操作");
     println!("  3. 游戏进行中请勿读取存档");
-    println!("  4. 存档会随游戏进度逐渐增大，请耐心等待");
     println!();
     msg_suc("【命令列表】");
     println!();
-    println!("  {:<20} {:<8} {}", "命令", "简写", "说明");
-    println!("  {:-<20} {:-<8} {:-}", "─", "─", "─");
+    println!("  {:<30} {}", "命令", "说明");
+    println!("  {:-<30} {:-}", "─", "─");
 
     let commands = [
-        ("quit", "q", "退出程序"),
-        ("help", "h", "显示帮助信息"),
-        ("clearScreen", "cls", "清屏"),
-        ("", "", ""),
-        ("save", "s", "保存存档 (需输入名称和备注)"),
-        ("qsave", "qs", "快速保存 (无需输入)"),
-        ("rsave", "rs", "覆盖保存 (更新最新存档)"),
-        ("", "", ""),
-        ("load <id>", "l <id>", "读取指定存档"),
-        ("qload", "ql", "快速读取 (最新存档)"),
-        ("log", "lo", "查看所有存档"),
-        ("slog", "sl", "查看最近7次存档"),
-        ("", "", ""),
-        ("mArchive <id>", "ma <id>", "修改存档信息"),
-        ("delArch <id>", "del <id>", "删除指定存档"),
-        ("qDelete", "qd", "删除最新存档"),
-        ("", "", ""),
-        ("usage", "use", "查看占用空间"),
+        ("init", "初始化版本控制"),
+        ("snapshot save [-m msg]", "保存快照"),
+        ("snapshot list", "列出快照"),
+        ("snapshot info <id>", "查看快照详情"),
+        ("snapshot delete <id>", "删除快照"),
+        ("timeline create <name>", "创建时间线"),
+        ("timeline list", "列出时间线"),
+        ("timeline switch <name>", "切换时间线"),
+        ("restore <id>", "恢复到快照"),
+        ("history", "查看历史"),
+        ("status", "查看状态"),
+        ("ignore <subcommand>", "忽略规则管理"),
+        ("gc", "垃圾回收"),
+        ("help", "显示帮助"),
+        ("quit / q", "退出"),
     ];
 
-    for (cmd, short, desc) in &commands {
-        if cmd.is_empty() {
-            println!();
-        } else {
-            println!("  {:<20} {:<8} {}", cmd, short, desc);
-        }
+    for (cmd, desc) in &commands {
+        println!("  {:<30} {}", cmd, desc);
     }
     println!();
     msg_suc("【示例】");
     println!();
-    println!("  保存存档: 输入 s 或 save，按提示操作");
-    println!("  读取存档: 输入 l 或 load，输入存档编号");
+    println!("  初始化:        gam init --path /path/to/saves");
+    println!("  保存快照:      gam snapshot save -m \"Boss beaten\"");
+    println!("  列出快照:      gam snapshot list");
+    println!("  恢复到快照:    gam restore 1");
     println!();
 }
 
