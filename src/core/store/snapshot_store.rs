@@ -398,6 +398,17 @@ impl TimelineManager {
             return Err(GamError::TimelineExists(new_name.to_string()));
         }
 
+        // 如果当前 HEAD 指向旧时间线，需要更新 HEAD
+        if self.head_file.exists() {
+            let head_content = fs::read_to_string(&self.head_file)?;
+            if head_content.trim() == format!("ref: refs/timelines/{}", old_name) {
+                fs::write(
+                    &self.head_file,
+                    format!("ref: refs/timelines/{}\n", new_name),
+                )?;
+            }
+        }
+
         fs::rename(old_path, new_path)?;
         Ok(())
     }
