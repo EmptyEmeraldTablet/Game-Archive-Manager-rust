@@ -140,15 +140,38 @@ impl SnapshotStore {
             for entry in fs::read_dir(&self.snapshot_dir)? {
                 let entry = entry?;
                 if entry.file_type()?.is_dir() {
-                    // 遍历该前缀目录下的所有文件
-                    for file in fs::read_dir(entry.path())? {
-                        let file = file?;
-                        if file.file_type()?.is_file() {
-                            let file_name = file.file_name().to_string_lossy().to_string();
-                            if file_name.starts_with(prefix) {
-                                match SnapshotStore::load_snapshot_file(file.path()) {
-                                    Ok(snapshot) => matches.push(snapshot),
-                                    Err(_) => continue,
+                    let dir_name = entry.file_name().to_string_lossy().to_string();
+
+                    // If prefix length > 2, check directory name first
+                    if prefix.len() > 2 {
+                        let dir_prefix = &prefix[..2];
+                        if dir_name.starts_with(dir_prefix) {
+                            // Directory matches, check file names
+                            let file_prefix = &prefix[2..];
+                            for file in fs::read_dir(entry.path())? {
+                                let file = file?;
+                                if file.file_type()?.is_file() {
+                                    let file_name = file.file_name().to_string_lossy().to_string();
+                                    if file_name.starts_with(file_prefix) {
+                                        match SnapshotStore::load_snapshot_file(file.path()) {
+                                            Ok(snapshot) => matches.push(snapshot),
+                                            Err(_) => continue,
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // Prefix length <= 2, just check directory name
+                        if dir_name.starts_with(prefix) {
+                            // Directory matches, load all files
+                            for file in fs::read_dir(entry.path())? {
+                                let file = file?;
+                                if file.file_type()?.is_file() {
+                                    match SnapshotStore::load_snapshot_file(file.path()) {
+                                        Ok(snapshot) => matches.push(snapshot),
+                                        Err(_) => continue,
+                                    }
                                 }
                             }
                         }
