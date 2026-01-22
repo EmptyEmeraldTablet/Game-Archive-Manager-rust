@@ -50,15 +50,7 @@ impl Repository {
 
 /// 处理 init 命令
 pub fn handle_init(path: Option<String>, force: bool) -> GamResult<()> {
-    let current_dir = std::env::current_dir()?;
-    let gam_dir = current_dir.join(".gam");
-
-    // 如果已存在且非强制初始化
-    if gam_dir.exists() && !force {
-        return Err(crate::core::error::GamError::AlreadyInitialized);
-    }
-
-    // 确定游戏存档目录
+    // First determine game_path from argument
     let game_path = if let Some(p) = path {
         PathBuf::from(p)
     } else {
@@ -74,6 +66,9 @@ pub fn handle_init(path: Option<String>, force: bool) -> GamResult<()> {
 
         game_path
     };
+
+    // gam_dir should be INSIDE game_path
+    let gam_dir = game_path.join(".gam");
 
     // 创建 .gam 目录结构
     std::fs::create_dir_all(&gam_dir)?;
