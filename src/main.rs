@@ -1,31 +1,156 @@
-use anyhow::Result;
-use std::panic;
+//! Game Archive Manager v2.0
+//!
+//! 游戏存档版本控制系统 - 像 Git 一样管理游戏存档
 
-mod commands;
+use anyhow::Result;
+use once_cell::sync::Lazy;
+use std::path::PathBuf;
+use std::process;
+
+mod cli;
 mod core;
 mod ui;
 mod utils;
 
-use commands::CommandHandler;
-use ui::print_title;
+use clap::Parser;
+use cli::Cli;
+use core::commands::{
+    handle_gc, handle_history, handle_ignore_add, handle_ignore_init, handle_ignore_list,
+    handle_init, handle_restore, handle_snapshot_info, handle_snapshot_list, handle_snapshot_save,
+    handle_status, handle_timeline_create, handle_timeline_delete, handle_timeline_list,
+    handle_timeline_switch,
+};
+use ui::{print_error, print_info, print_success};
+
+/// 全局 GAM 目录
+static GAM_DIR: Lazy<std::sync::Mutex<Option<PathBuf>>> = Lazy::new(|| std::sync::Mutex::new(None));
+
+/// 获取 GAM 目录
+pub fn get_gam_dir() -> PathBuf {
+    GAM_DIR
+        .lock()
+        .unwrap()
+        .clone()
+        .unwrap_or_else(|| PathBuf::from("."))
+}
+
+/// 设置 GAM 目录
+pub fn set_gam_dir(path: PathBuf) {
+    *GAM_DIR.lock().unwrap() = Some(path);
+}
 
 fn main() -> Result<()> {
-    // 设置 panic hook
-    panic::set_hook(Box::new(|info| {
-        let msg = info.to_string();
-        eprintln!("\x1b[31m程序发生错误: {}\x1b[0m", msg);
-        eprintln!(
-            "如有问题请提交 issue: https://github.com/yourusername/game-archive-manager/issues"
-        );
-        std::process::exit(1);
-    }));
+    // 解析命令行参数
+    let cli = Cli::parse();
 
-    // 打印标题
-    print_title();
+    // 处理 init 命令（不需要 .gam 目录）
+    if let cli::Commands::Init(init_args) = cli.command {
+        handle_init(init_args.path, init_args.force)?;
+        return Ok(());
+    }
 
-    // 运行命令处理器
-    let mut handler = CommandHandler::new();
-    handler.run();
+    // 检查当前目录是否为 GAM 仓库
+    let current_dir = std::env::current_dir()?;
+    let gam_dir = current_dir.join(".gam");
 
-    Ok(())
+    if !gam_dir.exists() {
+        print_error("当前目录不是 GAM 仓库。请先运行 'gam init --path <存档目录>' 初始化。");
+        process::exit(1);
+    }
+
+    set_gam_dir(gam_dir.clone());
+
+    // 处理命令
+    let result = handle_command(gam_dir, cli.command);
+
+    match result {
+        Ok(()) => Ok(()),
+        Err(e) => {
+            print_error(&format!("错误: {}", e));
+            Err(e.into())
+        }
+    }
+}
+
+fn handle_command(gam_dir: PathBuf, command: cli::Commands) -> core::GamResult<()> {
+    match command {
+        cli::Commands::Init(args) => handle_init(args.path, args.force),
+
+        cli::Commands::Snapshot(args) => match args.command {
+            cli::SnapshotCommands::Save(save_args) => {
+                handle_snapshot_save(&gam_dir, save_args.message, save_args.timeline)
+            }
+            cli::SnapshotCommands::List(list_args) => {
+                handle_snapshot_list(&gam_dir, list_args.all, list_args.timeline)
+            }
+            cli::SnapshotCommands::Info(info_args) => handle_snapshot_info(&gam_dir, &info_args.id),
+            cli::SnapshotCommands::Delete(delete_args) => {
+                print_info("snapshot delete 尚未实现");
+                Ok(())
+            }
+        },
+
+        cli::Commands::Timeline(args) => match args.command {
+            cli::TimelineCommands::Create(create_args) => {
+                handle_timeline_create(&gam_dir, &create_args.name, create_args.from)
+            }
+            cli::TimelineCommands::List => handle_timeline_list(&gam_dir),
+            cli::TimelineCommands::Switch(switch_args) => {
+                handle_timeline_switch(&gam_dir, &switch_args.target)
+            }
+            cli::TimelineCommands::Rename(rename_args) => {
+                print_info(&format!(
+                    "timeline rename: {} -> {}",
+                    rename_args.old_name, rename_args.new_name
+                ));
+                Ok(())
+            }
+            cli::TimelineCommands::Delete(delete_args) => {
+                handle_timeline_delete(&gam_dir, &delete_args.name, delete_args.force)
+            }
+            cli::TimelineCommands::Current => {
+                print_info("timeline current 尚未实现");
+                Ok(())
+            }
+        },
+
+        cli::Commands::Restore(restore_args) => {
+            handle_restore(&gam_dir, &restore_args.id, restore_args.force)
+        }
+
+        cli::Commands::History(history_args) => handle_history(&gam_dir, history_args.all),
+
+        cli::Commands::Status(_args) => handle_status(&gam_dir),
+
+        cli::Commands::Activity(_args) => {
+            print_info("activity 尚未实现");
+            Ok(())
+        }
+
+        cli::Commands::Diff(_args) => {
+            print_info("diff 命令尚未实现");
+            Ok(())
+        }
+
+        cli::Commands::Gc(gc_args) => handle_gc(&gam_dir, gc_args.aggressive, gc_args.dry_run),
+
+        cli::Commands::Ignore(args) => match args.command {
+            cli::IgnoreCommands::Add(add_args) => handle_ignore_add(&gam_dir, &add_args.pattern),
+            cli::IgnoreCommands::Remove(_remove_args) => {
+                print_info("ignore remove 尚未实现");
+                Ok(())
+            }
+            cli::IgnoreCommands::List => handle_ignore_list(&gam_dir),
+            cli::IgnoreCommands::Check(_check_args) => {
+                print_info("ignore check 尚未实现");
+                Ok(())
+            }
+            cli::IgnoreCommands::Init(init_args) => handle_ignore_init(&gam_dir, init_args.force),
+        },
+
+        cli::Commands::Doctor(_args) => {
+            print_info("doctor 命令尚未实现");
+            Ok(())
+        }
+    }
 }
