@@ -15,10 +15,11 @@ mod utils;
 use clap::Parser;
 use cli::Cli;
 use core::commands::{
-    handle_gc, handle_history, handle_ignore_add, handle_ignore_init, handle_ignore_list,
-    handle_init, handle_restore, handle_snapshot_info, handle_snapshot_list, handle_snapshot_save,
-    handle_status, handle_timeline_create, handle_timeline_delete, handle_timeline_list,
-    handle_timeline_switch,
+    handle_diff, handle_doctor, handle_gc, handle_history, handle_ignore_add, handle_ignore_check,
+    handle_ignore_init, handle_ignore_list, handle_ignore_remove, handle_init, handle_restore,
+    handle_snapshot_delete, handle_snapshot_info, handle_snapshot_list, handle_snapshot_save,
+    handle_status, handle_timeline_create, handle_timeline_current, handle_timeline_delete,
+    handle_timeline_list, handle_timeline_rename, handle_timeline_switch,
 };
 use ui::{print_error, print_info, print_success};
 
@@ -85,8 +86,7 @@ fn handle_command(gam_dir: PathBuf, command: cli::Commands) -> core::GamResult<(
             }
             cli::SnapshotCommands::Info(info_args) => handle_snapshot_info(&gam_dir, &info_args.id),
             cli::SnapshotCommands::Delete(delete_args) => {
-                print_info("snapshot delete 尚未实现");
-                Ok(())
+                handle_snapshot_delete(&gam_dir, &delete_args.id, delete_args.force)
             }
         },
 
@@ -99,19 +99,12 @@ fn handle_command(gam_dir: PathBuf, command: cli::Commands) -> core::GamResult<(
                 handle_timeline_switch(&gam_dir, &switch_args.target)
             }
             cli::TimelineCommands::Rename(rename_args) => {
-                print_info(&format!(
-                    "timeline rename: {} -> {}",
-                    rename_args.old_name, rename_args.new_name
-                ));
-                Ok(())
+                handle_timeline_rename(&gam_dir, &rename_args.old_name, &rename_args.new_name)
             }
             cli::TimelineCommands::Delete(delete_args) => {
                 handle_timeline_delete(&gam_dir, &delete_args.name, delete_args.force)
             }
-            cli::TimelineCommands::Current => {
-                print_info("timeline current 尚未实现");
-                Ok(())
-            }
+            cli::TimelineCommands::Current => handle_timeline_current(&gam_dir),
         },
 
         cli::Commands::Restore(restore_args) => {
@@ -127,30 +120,22 @@ fn handle_command(gam_dir: PathBuf, command: cli::Commands) -> core::GamResult<(
             Ok(())
         }
 
-        cli::Commands::Diff(_args) => {
-            print_info("diff 命令尚未实现");
-            Ok(())
-        }
+        cli::Commands::Diff(args) => handle_diff(&gam_dir, &args.id1, &args.id2),
 
         cli::Commands::Gc(gc_args) => handle_gc(&gam_dir, gc_args.aggressive, gc_args.dry_run),
 
         cli::Commands::Ignore(args) => match args.command {
             cli::IgnoreCommands::Add(add_args) => handle_ignore_add(&gam_dir, &add_args.pattern),
-            cli::IgnoreCommands::Remove(_remove_args) => {
-                print_info("ignore remove 尚未实现");
-                Ok(())
+            cli::IgnoreCommands::Remove(remove_args) => {
+                handle_ignore_remove(&gam_dir, &remove_args.pattern)
             }
             cli::IgnoreCommands::List => handle_ignore_list(&gam_dir),
-            cli::IgnoreCommands::Check(_check_args) => {
-                print_info("ignore check 尚未实现");
-                Ok(())
+            cli::IgnoreCommands::Check(check_args) => {
+                handle_ignore_check(&gam_dir, &check_args.file)
             }
             cli::IgnoreCommands::Init(init_args) => handle_ignore_init(&gam_dir, init_args.force),
         },
 
-        cli::Commands::Doctor(_args) => {
-            print_info("doctor 命令尚未实现");
-            Ok(())
-        }
+        cli::Commands::Doctor(args) => handle_doctor(&gam_dir, args.fix),
     }
 }

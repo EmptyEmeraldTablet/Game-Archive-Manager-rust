@@ -386,6 +386,72 @@ pub fn handle_snapshot_info(gam_dir: &PathBuf, id: &str) -> GamResult<()> {
     }
 }
 
+/// 处理 snapshot delete 命令
+pub fn handle_snapshot_delete(gam_dir: &PathBuf, id: &str, force: bool) -> GamResult<()> {
+    let mut repo = Repository::new(gam_dir.clone(), get_game_path(gam_dir)?)?;
+    let snapshot_store = &mut repo.snapshot_store;
+
+    // 查找快照
+    let snapshot = snapshot_store.get_by_prefix(id)?;
+
+    match snapshot {
+        Some(snap) => {
+            // 检查是否被时间线引用（使用 TimelineManager）
+            let is_referenced = repo.timeline_manager.is_snapshot_referenced(&snap.id)?;
+
+            if is_referenced && !force {
+                print_error(&format!(
+                    "无法删除快照 {}，因为它被以下时间线引用:",
+                    Formatter::short_hash(&snap.id)
+                ));
+                // 列出引用该快照的时间线
+                let timelines = repo.timeline_manager.list()?;
+                for tl in timelines {
+                    if tl.head_snapshot == snap.id {
+                        println!("  - {} (当前 HEAD)", tl.name);
+                    }
+                }
+                print_info("使用 --force 强制删除");
+                return Ok(());
+            }
+
+            // 确认操作
+            if !force {
+                println!("此操作将永久删除快照。");
+                println!(
+                    "  快照: {} ({})",
+                    Formatter::short_hash(&snap.id),
+                    snap.name
+                );
+                println!("  时间线: {}", snap.timeline);
+                println!("  文件数: {}", snap.files.len());
+
+                print_confirm("确定继续?");
+                let mut input = String::new();
+                std::io::stdin().read_line(&mut input)?;
+                if input.trim().to_lowercase() != "y" {
+                    print_info("操作已取消");
+                    return Ok(());
+                }
+            }
+
+            // 删除快照文件
+            snapshot_store.delete(&snap.id)?;
+
+            print_success(&format!(
+                "已删除快照 {} ({})",
+                Formatter::short_hash(&snap.id),
+                snap.name
+            ));
+
+            Ok(())
+        }
+        None => Err(crate::core::error::GamError::SnapshotNotFound(
+            id.to_string(),
+        )),
+    }
+}
+
 /// 处理 timeline create 命令
 pub fn handle_timeline_create(
     gam_dir: &PathBuf,
@@ -483,6 +549,58 @@ pub fn handle_timeline_switch(gam_dir: &PathBuf, target: &str) -> GamResult<()> 
             target.to_string(),
         )),
     }
+}
+
+/// 处理 timeline rename 命令
+pub fn handle_timeline_rename(gam_dir: &PathBuf, old_name: &str, new_name: &str) -> GamResult<()> {
+    let repo = Repository::new(gam_dir.clone(), get_game_path(gam_dir)?)?;
+
+    // 验证新名称
+    if new_name.is_empty() || new_name.contains('/') || new_name.contains('\\') {
+        return Err(crate::core::error::GamError::InvalidTimelineName(
+            new_name.to_string(),
+        ));
+    }
+
+    // 检查旧时间线是否存在
+    if !repo.timeline_manager.exists(old_name) {
+        return Err(crate::core::error::GamError::TimelineNotFound(
+            old_name.to_string(),
+        ));
+    }
+
+    // 检查新名称是否已存在
+    if repo.timeline_manager.exists(new_name) {
+        return Err(crate::core::error::GamError::TimelineExists(
+            new_name.to_string(),
+        ));
+    }
+
+    // 执行重命名
+    repo.timeline_manager.rename(old_name, new_name)?;
+
+    print_success(&format!(
+        "已将时间线 '{}' 重命名为 '{}'",
+        old_name, new_name
+    ));
+
+    Ok(())
+}
+
+/// 处理 timeline current 命令
+pub fn handle_timeline_current(gam_dir: &PathBuf) -> GamResult<()> {
+    let repo = Repository::new(gam_dir.clone(), get_game_path(gam_dir)?)?;
+
+    match repo.current_timeline()? {
+        Some(name) => {
+            print_success(&format!("当前时间线: {}", name));
+        }
+        None => {
+            print_info("当前没有活动的时间线 (分离 HEAD 状态)");
+        }
+    }
+
+    Ok(())
 }
 
 /// 处理 timeline delete 命令

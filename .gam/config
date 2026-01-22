@@ -1,0 +1,7 @@
+[core]
+game_path = "/tmp/gam-test-1769103712/game-saves"
+default_timeline = "main"
+use_gamignore = true
+
+[storage]
+strategy = "deduplication"
