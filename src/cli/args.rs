@@ -54,6 +54,10 @@ pub enum Commands {
     #[command(name = "ignore")]
     Ignore(IgnoreArgs),
 
+    /// 查看和管理配置
+    #[command(name = "config")]
+    Config(ConfigArgs),
+
     /// 诊断问题
     #[command(name = "doctor")]
     Doctor(DoctorArgs),
@@ -96,6 +100,14 @@ pub enum SnapshotCommands {
     /// 删除快照
     #[command(name = "delete")]
     Delete(DeleteArgs),
+
+    /// 为快照添加标签
+    #[command(name = "tag")]
+    Tag(TagArgs),
+
+    /// 列出快照标签
+    #[command(name = "tags")]
+    Tags(TagsArgs),
 }
 
 /// save 命令参数
@@ -138,6 +150,23 @@ pub struct DeleteArgs {
     /// 强制删除（不确认）
     #[arg(long)]
     pub force: bool,
+}
+
+/// tag 命令参数
+#[derive(Parser, Debug)]
+pub struct TagArgs {
+    /// 快照 ID
+    pub id: String,
+
+    /// 标签名称
+    pub name: String,
+}
+
+/// tags 命令参数
+#[derive(Parser, Debug)]
+pub struct TagsArgs {
+    /// 快照 ID（可选，不指定则显示所有标签）
+    pub id: Option<String>,
 }
 
 /// timeline 子命令参数
@@ -337,4 +366,18 @@ pub struct DoctorArgs {
     /// 修复检测到的问题
     #[arg(long)]
     pub fix: bool,
+}
+
+/// config 命令参数
+#[derive(Parser, Debug)]
+pub struct ConfigArgs {
+    /// 配置项名称 (如: core.default_timeline)
+    pub key: Option<String>,
+
+    /// 配置值
+    pub value: Option<String>,
+
+    /// 列出所有配置
+    #[arg(long)]
+    pub list: bool,
 }

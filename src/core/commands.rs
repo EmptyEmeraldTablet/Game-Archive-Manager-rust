@@ -2,9 +2,11 @@
 //!
 //! 实现所有核心命令的实际逻辑
 
+use crate::core::activity::{ActivityAction, ActivityEngine};
 use crate::core::error::GamResult;
 use crate::core::ignore::IgnoreEngine;
 use crate::core::store::{ContentStore, SnapshotStore, TimelineManager};
+use crate::core::tag::TagStore;
 use crate::core::types::{FileEntry, Snapshot};
 use crate::ui::{print_error, print_info, print_success, Formatter};
 use crate::utils::{FileUtils, HashUtils};
@@ -97,6 +99,10 @@ strategy = "deduplication"
     // 创建默认时间线
     std::fs::write(gam_dir.join("refs").join("timelines").join("main"), "")?;
 
+    // 记录活动
+    let engine = ActivityEngine::new(&gam_dir);
+    engine.log(ActivityAction::Init, None, None, None)?;
+
     print_success(&format!(
         "初始化完成！\n  游戏存档目录: {}\n  GAM 仓库: {}",
         game_path.to_string_lossy(),
@@ -181,6 +187,15 @@ pub fn handle_snapshot_save(
     // 更新时间线 HEAD
     repo.timeline_manager
         .update_head(&timeline_name, &snapshot.id)?;
+
+    // 记录活动
+    let engine = ActivityEngine::new(gam_dir);
+    engine.log(
+        ActivityAction::SnapshotSave,
+        Some(&timeline_name),
+        Some(&Formatter::short_hash(&snapshot.id)),
+        None,
+    )?;
 
     print_success(&format!(
         "已保存快照 {} ({})\n  时间线: {}\n  文件数: {}\n  大小: {}",
@@ -386,6 +401,48 @@ pub fn handle_snapshot_info(gam_dir: &PathBuf, id: &str) -> GamResult<()> {
     }
 }
 
+/// 处理 snapshot tag 命令 - 为快照添加标签
+pub fn handle_snapshot_tag(gam_dir: &PathBuf, id: &str, tag_name: &str) -> GamResult<()> {
+    let repo = Repository::new(gam_dir.clone(), get_game_path(gam_dir)?)?;
+
+    // 验证标签名称
+    if tag_name.is_empty() || tag_name.contains('/') || tag_name.contains('\\') {
+        return Err(crate::core::error::GamError::InvalidTagName(
+            tag_name.to_string(),
+        ));
+    }
+
+    // 查找快照
+    let snapshot = repo.snapshot_store.get_by_prefix(id)?;
+
+    match snapshot {
+        Some(snap) => {
+            // 加载标签存储
+            let mut tag_store = TagStore::new(gam_dir);
+
+            // 检查标签是否已存在
+            if tag_store.exists(tag_name) {
+                print_error(&format!("标签 '{}' 已存在", tag_name));
+                return Ok(());
+            }
+
+            // 添加标签
+            tag_store.add_tag(tag_name, &snap.id);
+            tag_store.save(gam_dir)?;
+
+            print_success(&format!(
+                "已为快照 {} 添加标签 '{}'",
+                Formatter::short_hash(&snap.id),
+                tag_name
+            ));
+            Ok(())
+        }
+        None => Err(crate::core::error::GamError::SnapshotNotFound(
+            id.to_string(),
+        )),
+    }
+}
+
 /// 处理 snapshot delete 命令
 pub fn handle_snapshot_delete(gam_dir: &PathBuf, id: &str, force: bool) -> GamResult<()> {
     let mut repo = Repository::new(gam_dir.clone(), get_game_path(gam_dir)?)?;
@@ -438,6 +495,15 @@ pub fn handle_snapshot_delete(gam_dir: &PathBuf, id: &str, force: bool) -> GamRe
             // 删除快照文件
             snapshot_store.delete(&snap.id)?;
 
+            // 记录活动
+            let engine = ActivityEngine::new(gam_dir);
+            engine.log(
+                ActivityAction::SnapshotDelete,
+                Some(&snap.timeline),
+                Some(&Formatter::short_hash(&snap.id)),
+                None,
+            )?;
+
             print_success(&format!(
                 "已删除快照 {} ({})",
                 Formatter::short_hash(&snap.id),
@@ -487,6 +553,10 @@ pub fn handle_timeline_create(
     repo.timeline_manager
         .create(name, from_snapshot.as_deref())?;
 
+    // 记录活动
+    let engine = ActivityEngine::new(gam_dir);
+    engine.log(ActivityAction::TimelineCreate, Some(name), None, None)?;
+
     print_success(&format!("已创建时间线 '{}'", name));
 
     // 如果有起始快照，列出该快照的信息
@@ -526,7 +596,20 @@ pub fn handle_timeline_switch(gam_dir: &PathBuf, target: &str) -> GamResult<()> 
 
     // 检查是否是时间线名称
     if repo.timeline_manager.exists(target) {
+        // 获取之前的时间线
+        let previous = repo.current_timeline()?;
+
         repo.timeline_manager.set_current(target)?;
+
+        // 记录活动
+        let engine = ActivityEngine::new(gam_dir);
+        engine.log(
+            ActivityAction::TimelineSwitch,
+            Some(target),
+            Some(target),
+            previous.as_deref(),
+        )?;
+
         print_success(&format!("已切换到时间线 '{}'", target));
         return Ok(());
     }
@@ -579,6 +662,15 @@ pub fn handle_timeline_rename(gam_dir: &PathBuf, old_name: &str, new_name: &str)
     // 执行重命名
     repo.timeline_manager.rename(old_name, new_name)?;
 
+    // 记录活动
+    let engine = ActivityEngine::new(gam_dir);
+    engine.log(
+        ActivityAction::TimelineRename,
+        Some(old_name),
+        Some(new_name),
+        Some(old_name),
+    )?;
+
     print_success(&format!(
         "已将时间线 '{}' 重命名为 '{}'",
         old_name, new_name
@@ -624,6 +716,10 @@ pub fn handle_timeline_delete(gam_dir: &PathBuf, name: &str, force: bool) -> Gam
     }
 
     repo.timeline_manager.delete(name)?;
+
+    // 记录活动
+    let engine = ActivityEngine::new(gam_dir);
+    engine.log(ActivityAction::TimelineDelete, Some(name), None, None)?;
 
     print_success(&format!("已删除时间线 '{}'", name));
 
@@ -683,6 +779,15 @@ pub fn handle_restore(gam_dir: &PathBuf, id: &str, force: bool) -> GamResult<()>
             if !head_content.starts_with("ref:") {
                 std::fs::write(gam_dir.join("HEAD"), &snap.id)?;
             }
+
+            // 记录活动
+            let engine = ActivityEngine::new(gam_dir);
+            engine.log(
+                ActivityAction::Restore,
+                Some(&snap.timeline),
+                Some(&Formatter::short_hash(&snap.id)),
+                None,
+            )?;
 
             print_success(&format!(
                 "已恢复到快照 {} ({})\n  恢复了 {} 个文件",
@@ -904,6 +1009,158 @@ pub fn handle_status(gam_dir: &PathBuf) -> GamResult<()> {
     Ok(())
 }
 
+/// 处理 activity 命令
+pub fn handle_activity(gam_dir: &PathBuf, limit: u32) -> GamResult<()> {
+    let engine = ActivityEngine::new(gam_dir);
+
+    let entries = engine.get_entries(limit as usize)?;
+
+    if entries.is_empty() {
+        print_info("暂无活动记录");
+        return Ok(());
+    }
+
+    println!("活动记录 (最近 {} 条):", entries.len());
+    println!();
+
+    for entry in &entries {
+        println!("  {}", entry.to_display_string());
+    }
+
+    Ok(())
+}
+
+/// 处理 config 命令
+pub fn handle_config(
+    gam_dir: &PathBuf,
+    key: Option<String>,
+    value: Option<String>,
+    list: bool,
+) -> GamResult<()> {
+    let config_path = gam_dir.join("config");
+
+    if !config_path.exists() {
+        print_info("配置文件不存在");
+        return Ok(());
+    }
+
+    // 读取配置
+    let content = std::fs::read_to_string(&config_path)?;
+
+    // 列出所有配置
+    if list {
+        println!("当前配置:");
+        println!();
+        println!("{}", content);
+        return Ok(());
+    }
+
+    // 获取配置值
+    if let Some(k) = key {
+        if value.is_none() {
+            // 显示配置值 - 简单文本搜索
+            let lines: Vec<&str> = content.lines().collect();
+            let parts: Vec<&str> = k.split('.').collect();
+            if parts.len() != 2 {
+                print_error("无效的配置项格式，使用 'section.key' 格式");
+                return Ok(());
+            }
+
+            let section = parts[0];
+            let key_name = parts[1];
+            let mut found = false;
+
+            let mut in_section = false;
+            for line in lines {
+                let trimmed = line.trim();
+
+                // 检查是否进入新段
+                if trimmed.starts_with('[') && trimmed.ends_with(']') {
+                    in_section = &trimmed[1..trimmed.len() - 1] == section;
+                }
+
+                // 在正确段中查找配置项
+                if in_section && trimmed.starts_with(key_name) && trimmed.contains('=') {
+                    if let Some(pos) = trimmed.find('=') {
+                        let val = &trimmed[pos + 1..].trim();
+                        println!("{} = {}", k, val);
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+            if !found {
+                print_info(&format!("配置项 '{}' 不存在", k));
+            }
+        } else {
+            // 设置配置值 - 简单文本替换
+            let v = value.unwrap();
+            let parts: Vec<&str> = k.split('.').collect();
+            if parts.len() != 2 {
+                print_error("无效的配置项格式，使用 'section.key' 格式");
+                return Ok(());
+            }
+
+            let section = parts[0];
+            let key_name = parts[1];
+
+            // 简单处理：直接修改配置文件的对应行
+            let new_line = format!("{} = {}", key_name, v);
+            let lines: Vec<&str> = content.lines().collect();
+            let mut found = false;
+            let mut new_lines: Vec<String> = Vec::new();
+            let mut in_section = false;
+
+            for line in lines {
+                let trimmed = line.trim();
+                let mut line = line.to_string();
+
+                // 检查是否进入新段
+                if trimmed.starts_with('[') && trimmed.ends_with(']') {
+                    in_section = &trimmed[1..trimmed.len() - 1] == section;
+                }
+
+                // 在正确段中查找配置项
+                if in_section && trimmed.starts_with(key_name) && trimmed.contains('=') {
+                    line = new_line.clone();
+                    found = true;
+                }
+
+                new_lines.push(line);
+            }
+
+            if found {
+                let new_content = new_lines.join("\n");
+                std::fs::write(&config_path, new_content)?;
+                print_success(&format!("已设置 {} = {}", k, v));
+            } else {
+                // 如果没找到，追加新配置
+                let mut new_content = content;
+                if !new_content.ends_with('\n') {
+                    new_content.push('\n');
+                }
+                new_content.push_str(&format!("[{}]\n{} = {}\n", section, key_name, v));
+                std::fs::write(&config_path, new_content)?;
+                print_success(&format!("已添加 {} = {}", k, v));
+            }
+        }
+    } else {
+        // 没有参数，显示帮助
+        println!("用法:");
+        println!("  gam config --list          列出所有配置");
+        println!("  gam config <key>           查看配置值");
+        println!("  gam config <key> <value>   设置配置值");
+        println!();
+        println!("示例:");
+        println!("  gam config --list");
+        println!("  gam config core.default_timeline");
+        println!("  gam config core.default_timeline main");
+    }
+
+    Ok(())
+}
+
 /// 处理 gc 命令
 pub fn handle_gc(gam_dir: &PathBuf, aggressive: bool, dry_run: bool) -> GamResult<()> {
     let mut repo = Repository::new(gam_dir.clone(), get_game_path(gam_dir)?)?;
@@ -1027,6 +1284,21 @@ pub fn handle_gc(gam_dir: &PathBuf, aggressive: bool, dry_run: bool) -> GamResul
             Formatter::format_size(orphaned_snapshot_size),
             Formatter::format_size(total_freed)
         ));
+    }
+
+    // 记录活动（仅在实际执行时）
+    if !dry_run {
+        let engine = ActivityEngine::new(gam_dir);
+        engine.log(
+            ActivityAction::Gc,
+            None,
+            Some(&format!(
+                "{} 个内容, {} 个快照",
+                orphaned_content_count,
+                orphaned_snapshots.len()
+            )),
+            None,
+        )?;
     }
 
     Ok(())
@@ -1289,6 +1561,10 @@ pub fn handle_ignore_add(gam_dir: &PathBuf, pattern: &str) -> GamResult<()> {
 
     std::fs::write(&ignore_file, content)?;
 
+    // 记录活动
+    let engine = ActivityEngine::new(gam_dir);
+    engine.log(ActivityAction::IgnoreAdd, None, Some(pattern), None)?;
+
     print_success(&format!("已添加规则: {}", pattern));
 
     Ok(())
@@ -1326,6 +1602,11 @@ pub fn handle_ignore_remove(gam_dir: &PathBuf, pattern: &str) -> GamResult<()> {
 
     if removed {
         std::fs::write(&ignore_file, new_lines.join("\n"))?;
+
+        // 记录活动
+        let engine = ActivityEngine::new(gam_dir);
+        engine.log(ActivityAction::IgnoreRemove, None, Some(pattern), None)?;
+
         print_success(&format!("已移除规则: {}", pattern));
     } else {
         print_info(&format!("未找到规则: {}", pattern));

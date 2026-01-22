@@ -15,9 +15,10 @@ mod utils;
 use clap::Parser;
 use cli::Cli;
 use core::commands::{
-    handle_diff, handle_doctor, handle_gc, handle_history, handle_ignore_add, handle_ignore_check,
-    handle_ignore_init, handle_ignore_list, handle_ignore_remove, handle_init, handle_restore,
-    handle_snapshot_delete, handle_snapshot_info, handle_snapshot_list, handle_snapshot_save,
+    handle_activity, handle_config, handle_diff, handle_doctor, handle_gc, handle_history,
+    handle_ignore_add, handle_ignore_check, handle_ignore_init, handle_ignore_list,
+    handle_ignore_remove, handle_init, handle_restore, handle_snapshot_delete,
+    handle_snapshot_info, handle_snapshot_list, handle_snapshot_save, handle_snapshot_tag,
     handle_status, handle_timeline_create, handle_timeline_current, handle_timeline_delete,
     handle_timeline_list, handle_timeline_rename, handle_timeline_switch,
 };
@@ -88,6 +89,13 @@ fn handle_command(gam_dir: PathBuf, command: cli::Commands) -> core::GamResult<(
             cli::SnapshotCommands::Delete(delete_args) => {
                 handle_snapshot_delete(&gam_dir, &delete_args.id, delete_args.force)
             }
+            cli::SnapshotCommands::Tag(tag_args) => {
+                handle_snapshot_tag(&gam_dir, &tag_args.id, &tag_args.name)
+            }
+            cli::SnapshotCommands::Tags(_tags_args) => {
+                print_info("snapshot tags 功能尚未实现");
+                Ok(())
+            }
         },
 
         cli::Commands::Timeline(args) => match args.command {
@@ -115,10 +123,7 @@ fn handle_command(gam_dir: PathBuf, command: cli::Commands) -> core::GamResult<(
 
         cli::Commands::Status(_args) => handle_status(&gam_dir),
 
-        cli::Commands::Activity(_args) => {
-            print_info("activity 尚未实现");
-            Ok(())
-        }
+        cli::Commands::Activity(args) => handle_activity(&gam_dir, args.limit),
 
         cli::Commands::Diff(args) => handle_diff(&gam_dir, &args.id1, &args.id2),
 
@@ -135,6 +140,8 @@ fn handle_command(gam_dir: PathBuf, command: cli::Commands) -> core::GamResult<(
             }
             cli::IgnoreCommands::Init(init_args) => handle_ignore_init(&gam_dir, init_args.force),
         },
+
+        cli::Commands::Config(args) => handle_config(&gam_dir, args.key, args.value, args.list),
 
         cli::Commands::Doctor(args) => handle_doctor(&gam_dir, args.fix),
     }

@@ -52,6 +52,10 @@ pub enum GamError {
     #[error("Invalid timeline name: {0}")]
     InvalidTimelineName(String),
 
+    /// 无效的标签名称
+    #[error("Invalid tag name: {0}")]
+    InvalidTagName(String),
+
     /// 无效的配置
     #[error("Invalid config: {0}")]
     InvalidConfig(String),

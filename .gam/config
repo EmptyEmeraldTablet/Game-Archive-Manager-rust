@@ -1,6 +1,6 @@
 [core]
 game_path = "/tmp/gam-test-1769103712/game-saves"
-default_timeline = "main"
+default_timeline = testing
 use_gamignore = true
 
 [storage]
