@@ -215,6 +215,7 @@ fn chinese_catalog() -> MessageCatalog {
     cat.add("ui.error", "错误");
     cat.add("ui.warning", "警告");
     cat.add("ui.info", "信息");
+    cat.add("ui.loading", "正在加载...");
 
     // Init command
     cat.add(
@@ -409,6 +410,44 @@ fn chinese_catalog() -> MessageCatalog {
     cat.add("main.error.operation_failed", "错误: {{error}}");
     cat.add("main.info.not_implemented", "snapshot tags 功能尚未实现");
 
+    // CLI command descriptions
+    cat.add(
+        "cli.app.description",
+        "Game Archive Manager v2.0 - 像 Git 一样管理游戏存档",
+    );
+    cat.add("cli.command.init", "初始化版本控制");
+    cat.add("cli.command.snapshot", "快照管理");
+    cat.add("cli.command.timeline", "时间线管理");
+    cat.add("cli.command.restore", "恢复到快照");
+    cat.add("cli.command.history", "查看历史");
+    cat.add("cli.command.status", "查看状态");
+    cat.add("cli.command.activity", "查看活动日志");
+    cat.add("cli.command.diff", "比较快照");
+    cat.add("cli.command.gc", "垃圾回收");
+    cat.add("cli.command.ignore", "忽略规则管理");
+    cat.add("cli.command.config", "查看和管理配置");
+    cat.add("cli.command.doctor", "诊断问题");
+    cat.add("cli.command.help", "显示帮助信息");
+    cat.add("cli.arg.game_path", "游戏存档目录路径");
+    cat.add("cli.arg.force", "强制重新初始化");
+    cat.add("cli.command.snapshot_save", "保存当前状态为快照");
+    cat.add("cli.command.snapshot_list", "列出快照");
+    cat.add("cli.command.snapshot_info", "查看快照详情");
+    cat.add("cli.command.snapshot_delete", "删除快照");
+    cat.add("cli.command.snapshot_tag", "为快照添加标签");
+    cat.add("cli.command.snapshot_tags", "列出快照标签");
+    cat.add("cli.command.timeline_create", "创建时间线");
+    cat.add("cli.command.timeline_list", "列出时间线");
+    cat.add("cli.command.timeline_switch", "切换时间线");
+    cat.add("cli.command.timeline_rename", "重命名时间线");
+    cat.add("cli.command.timeline_delete", "删除时间线");
+    cat.add("cli.command.timeline_current", "显示当前时间线");
+    cat.add("cli.arg.snapshot_message", "快照名称");
+    cat.add("cli.arg.timeline_name", "时间线名称");
+    cat.add("cli.arg.snapshot_id", "快照 ID");
+    cat.add("cli.arg.tag_name", "标签名称");
+    cat.add("cli.arg.pattern", "模式");
+
     cat
 }
 
@@ -421,6 +460,7 @@ fn english_catalog() -> MessageCatalog {
     cat.add("ui.error", "Error");
     cat.add("ui.warning", "Warning");
     cat.add("ui.info", "Info");
+    cat.add("ui.loading", "Loading...");
 
     // Init command
     cat.add("init.success", "Initialization complete!\n  Game saves directory: {{game_path}}\n  GAM repository: {{gam_dir}}");
@@ -626,6 +666,50 @@ fn english_catalog() -> MessageCatalog {
         "main.info.not_implemented",
         "snapshot tags feature is not yet implemented",
     );
+
+    // CLI command descriptions
+    cat.add(
+        "cli.app.description",
+        "Game Archive Manager v2.0 - Version control for game saves like Git",
+    );
+    cat.add("cli.command.init", "Initialize version control");
+    cat.add("cli.command.snapshot", "Snapshot management");
+    cat.add("cli.command.timeline", "Timeline management");
+    cat.add("cli.command.restore", "Restore to snapshot");
+    cat.add("cli.command.history", "View history");
+    cat.add("cli.command.status", "View status");
+    cat.add("cli.command.activity", "View activity log");
+    cat.add("cli.command.diff", "Compare snapshots");
+    cat.add("cli.command.gc", "Garbage collection");
+    cat.add("cli.command.ignore", "Ignore rules management");
+    cat.add("cli.command.config", "View and manage configuration");
+    cat.add("cli.command.doctor", "Diagnose issues");
+    cat.add(
+        "cli.command.help",
+        "Print this message or the help of the given subcommand(s)",
+    );
+    cat.add("cli.arg.game_path", "Game saves directory path");
+    cat.add("cli.arg.force", "Force reinitialize");
+    cat.add(
+        "cli.command.snapshot_save",
+        "Save current state as snapshot",
+    );
+    cat.add("cli.command.snapshot_list", "List snapshots");
+    cat.add("cli.command.snapshot_info", "View snapshot details");
+    cat.add("cli.command.snapshot_delete", "Delete snapshot");
+    cat.add("cli.command.snapshot_tag", "Add tag to snapshot");
+    cat.add("cli.command.snapshot_tags", "List snapshot tags");
+    cat.add("cli.command.timeline_create", "Create timeline");
+    cat.add("cli.command.timeline_list", "List timelines");
+    cat.add("cli.command.timeline_switch", "Switch timeline");
+    cat.add("cli.command.timeline_rename", "Rename timeline");
+    cat.add("cli.command.timeline_delete", "Delete timeline");
+    cat.add("cli.command.timeline_current", "Show current timeline");
+    cat.add("cli.arg.snapshot_message", "Snapshot name");
+    cat.add("cli.arg.timeline_name", "Timeline name");
+    cat.add("cli.arg.snapshot_id", "Snapshot ID");
+    cat.add("cli.arg.tag_name", "Tag name");
+    cat.add("cli.arg.pattern", "Pattern");
 
     cat
 }

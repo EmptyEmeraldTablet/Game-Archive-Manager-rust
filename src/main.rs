@@ -1,6 +1,6 @@
 //! Game Archive Manager v2.0
 //!
-//! 游戏存档版本控制系统 - 像 Git 一样管理游戏存档
+//! Version control for game saves like Git
 
 use anyhow::Result;
 use once_cell::sync::Lazy;
@@ -24,10 +24,10 @@ use core::commands::{
 };
 use ui::{print_error, print_info};
 
-/// 全局 GAM 目录
+/// Global GAM directory
 static GAM_DIR: Lazy<std::sync::Mutex<Option<PathBuf>>> = Lazy::new(|| std::sync::Mutex::new(None));
 
-/// 获取 GAM 目录
+/// Get GAM directory
 pub fn get_gam_dir() -> PathBuf {
     GAM_DIR
         .lock()
@@ -36,22 +36,22 @@ pub fn get_gam_dir() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from("."))
 }
 
-/// 设置 GAM 目录
+/// Set GAM directory
 pub fn set_gam_dir(path: PathBuf) {
     *GAM_DIR.lock().unwrap() = Some(path);
 }
 
 fn main() -> Result<()> {
-    // 解析命令行参数
+    // Parse command line arguments
     let cli = Cli::parse();
 
-    // 处理 init 命令（不需要 .gam 目录）
+    // Handle init command (doesn't require .gam directory)
     if let cli::Commands::Init(init_args) = cli.command {
         handle_init(init_args.path, init_args.force)?;
         return Ok(());
     }
 
-    // 检查当前目录是否为 GAM 仓库
+    // Check if current directory is a GAM repository
     let current_dir = std::env::current_dir()?;
     let gam_dir = current_dir.join(".gam");
 

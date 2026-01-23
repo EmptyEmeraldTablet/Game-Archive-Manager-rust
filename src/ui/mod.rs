@@ -76,56 +76,56 @@ pub fn messages() -> crate::core::MessageManager {
 
 pub fn print_help() {
     println!();
-    msg_suc("【使用说明】");
+    msg_suc("[Usage Guide]");
     println!();
-    println!("  游戏存档版本控制系统 - 像 Git 一样管理游戏存档");
+    println!("  Game Archive Manager v2.0 - Version control for game saves like Git");
     println!();
-    msg_wrn("【注意事项】");
+    msg_wrn("[Notes]");
     println!();
-    println!("  1. 程序会在游戏存档目录创建 .gam 目录");
-    println!("  2. 请关闭游戏后再进行存档/读档操作");
-    println!("  3. 游戏进行中请勿读取存档");
+    println!("  1. The program creates a .gam directory in the game saves directory");
+    println!("  2. Please close the game before save/load operations");
+    println!("  3. Do not load saves while the game is running");
     println!();
-    msg_suc("【命令列表】");
+    msg_suc("[Command List]");
     println!();
-    println!("  {:<30} {}", "命令", "说明");
-    println!("  {:-<30} {:-}", "─", "─");
+    println!("  {:<30} {}", "Command", "Description");
+    println!("  {:-<30} {:-}", "-", "-");
 
     let commands = [
-        ("init", "初始化版本控制"),
-        ("snapshot save [-m msg]", "保存快照"),
-        ("snapshot list", "列出快照"),
-        ("snapshot info <id>", "查看快照详情"),
-        ("snapshot delete <id>", "删除快照"),
-        ("snapshot tag <id> <name>", "为快照添加标签"),
-        ("timeline create <name>", "创建时间线"),
-        ("timeline list", "列出时间线"),
-        ("timeline switch <name>", "切换时间线"),
-        ("timeline rename <old> <new>", "重命名时间线"),
-        ("timeline current", "显示当前时间线"),
-        ("restore <id>", "恢复到快照"),
-        ("history", "查看历史"),
-        ("activity", "查看活动日志"),
-        ("status", "查看状态"),
-        ("diff <id1> <id2>", "比较快照"),
-        ("ignore <subcommand>", "忽略规则管理"),
-        ("config", "配置管理"),
-        ("gc", "垃圾回收"),
-        ("doctor", "诊断问题"),
-        ("help", "显示帮助"),
-        ("quit / q", "退出"),
+        ("init", "Initialize version control"),
+        ("snapshot save [-m msg]", "Save snapshot"),
+        ("snapshot list", "List snapshots"),
+        ("snapshot info <id>", "View snapshot details"),
+        ("snapshot delete <id>", "Delete snapshot"),
+        ("snapshot tag <id> <name>", "Add tag to snapshot"),
+        ("timeline create <name>", "Create timeline"),
+        ("timeline list", "List timelines"),
+        ("timeline switch <name>", "Switch timeline"),
+        ("timeline rename <old> <new>", "Rename timeline"),
+        ("timeline current", "Show current timeline"),
+        ("restore <id>", "Restore to snapshot"),
+        ("history", "View history"),
+        ("activity", "View activity log"),
+        ("status", "View status"),
+        ("diff <id1> <id2>", "Compare snapshots"),
+        ("ignore <subcommand>", "Ignore rules management"),
+        ("config", "Configuration management"),
+        ("gc", "Garbage collection"),
+        ("doctor", "Diagnose issues"),
+        ("help", "Show help"),
+        ("quit / q", "Quit"),
     ];
 
     for (cmd, desc) in &commands {
         println!("  {:<30} {}", cmd, desc);
     }
     println!();
-    msg_suc("【示例】");
+    msg_suc("[Examples]");
     println!();
-    println!("  初始化:        gam init --path /path/to/saves");
-    println!("  保存快照:      gam snapshot save -m \"Boss beaten\"");
-    println!("  列出快照:      gam snapshot list");
-    println!("  恢复到快照:    gam restore 1");
+    println!("  Initialize:       gam init --path /path/to/saves");
+    println!("  Save snapshot:    gam snapshot save -m \"Boss beaten\"");
+    println!("  List snapshots:   gam snapshot list");
+    println!("  Restore:          gam restore 1");
     println!();
 }
 
@@ -135,7 +135,11 @@ pub fn print_prompt() {
 }
 
 pub fn print_loading_prompt() {
-    print!("  正在加载...");
+    let msg = crate::core::global_messages()
+        .get("ui.loading")
+        .cloned()
+        .unwrap_or_else(|| "Loading...".to_string());
+    print!("  {}", msg);
     io::stdout().flush().unwrap();
 }
 
