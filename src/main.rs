@@ -22,7 +22,7 @@ use core::commands::{
     handle_status, handle_timeline_create, handle_timeline_current, handle_timeline_delete,
     handle_timeline_list, handle_timeline_rename, handle_timeline_switch,
 };
-use ui::{print_error, print_info, print_success};
+use ui::{print_error, print_info};
 
 /// 全局 GAM 目录
 static GAM_DIR: Lazy<std::sync::Mutex<Option<PathBuf>>> = Lazy::new(|| std::sync::Mutex::new(None));
@@ -56,7 +56,7 @@ fn main() -> Result<()> {
     let gam_dir = current_dir.join(".gam");
 
     if !gam_dir.exists() {
-        print_error("当前目录不是 GAM 仓库。请先运行 'gam init --path <存档目录>' 初始化。");
+        print_error(&crate::core::global_messages().t("main.error.not_gam_directory", &[]));
         process::exit(1);
     }
 
@@ -68,7 +68,10 @@ fn main() -> Result<()> {
     match result {
         Ok(()) => Ok(()),
         Err(e) => {
-            print_error(&format!("错误: {}", e));
+            print_error(
+                &crate::core::global_messages()
+                    .t("main.error.operation_failed", &[("error", &e.to_string())]),
+            );
             Err(e.into())
         }
     }
@@ -93,7 +96,7 @@ fn handle_command(gam_dir: PathBuf, command: cli::Commands) -> core::GamResult<(
                 handle_snapshot_tag(&gam_dir, &tag_args.id, &tag_args.name)
             }
             cli::SnapshotCommands::Tags(_tags_args) => {
-                print_info("snapshot tags 功能尚未实现");
+                print_info(&crate::core::global_messages().t("main.info.not_implemented", &[]));
                 Ok(())
             }
         },

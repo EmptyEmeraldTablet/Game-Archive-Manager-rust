@@ -168,25 +168,41 @@ impl MessageManager {
     /// Get success message style
     pub fn success(&self, key: &str, vars: &[(&str, &str)]) -> String {
         let base = self.t(key, vars);
-        format!("  [成功] {}", base)
+        let prefix = self
+            .get("ui.success")
+            .map(|s| format!("  [{}] ", s))
+            .unwrap_or_else(|| "  [Success] ".to_string());
+        format!("{}{}", prefix, base)
     }
 
     /// Get error message style
     pub fn error(&self, key: &str, vars: &[(&str, &str)]) -> String {
         let base = self.t(key, vars);
-        format!("  [错误] {}", base)
+        let prefix = self
+            .get("ui.error")
+            .map(|s| format!("  [{}] ", s))
+            .unwrap_or_else(|| "  [Error] ".to_string());
+        format!("{}{}", prefix, base)
     }
 
     /// Get warning message style
     pub fn warning(&self, key: &str, vars: &[(&str, &str)]) -> String {
         let base = self.t(key, vars);
-        format!("  [警告] {}", base)
+        let prefix = self
+            .get("ui.warning")
+            .map(|s| format!("  [{}] ", s))
+            .unwrap_or_else(|| "  [Warning] ".to_string());
+        format!("{}{}", prefix, base)
     }
 
     /// Get info message style
     pub fn info(&self, key: &str, vars: &[(&str, &str)]) -> String {
         let base = self.t(key, vars);
-        format!("  [信息] {}", base)
+        let prefix = self
+            .get("ui.info")
+            .map(|s| format!("  [{}] ", s))
+            .unwrap_or_else(|| "  [Info] ".to_string());
+        format!("{}{}", prefix, base)
     }
 }
 
@@ -384,6 +400,14 @@ fn chinese_catalog() -> MessageCatalog {
         "common.error.game_path_not_found",
         "游戏存档目录不存在: {{path}}",
     );
+
+    // Main entry errors
+    cat.add(
+        "main.error.not_gam_directory",
+        "当前目录不是 GAM 仓库。请先运行 'gam init --path <存档目录>' 初始化。",
+    );
+    cat.add("main.error.operation_failed", "错误: {{error}}");
+    cat.add("main.info.not_implemented", "snapshot tags 功能尚未实现");
 
     cat
 }
@@ -590,6 +614,17 @@ fn english_catalog() -> MessageCatalog {
     cat.add(
         "common.error.game_path_not_found",
         "Game saves directory not found: {{path}}",
+    );
+
+    // Main entry errors
+    cat.add(
+        "main.error.not_gam_directory",
+        "Current directory is not a GAM repository. Please run 'gam init --path <saves_directory>' first.",
+    );
+    cat.add("main.error.operation_failed", "Error: {{error}}");
+    cat.add(
+        "main.info.not_implemented",
+        "snapshot tags feature is not yet implemented",
     );
 
     cat

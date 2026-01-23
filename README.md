@@ -265,6 +265,8 @@ game-archive-manager/
 │   │   ├── commands.rs      # 命令实现
 │   │   ├── error.rs         # 错误类型
 │   │   ├── ignore.rs        # 忽略规则引擎
+│   │   ├── messages/        # 国际化消息
+│   │   │   └── mod.rs       # 消息目录和本地化管理
 │   │   ├── store/           # 存储引擎
 │   │   │   ├── mod.rs
 │   │   │   ├── content_store.rs
@@ -291,6 +293,84 @@ game-archive-manager/
   - `chrono` - 日期时间处理
   - `thiserror` - 错误类型定义
   - `serde` - 序列化
+
+## 国际化 (i18n)
+
+Game Archive Manager v2.0 支持多语言界面，默认包含英文 (en) 和简体中文 (zh-CN)。
+
+### 支持的语言
+
+| 语言 | 区域 | 消息前缀 |
+|------|------|----------|
+| English | en | [Success] [Error] [Warning] [Info] |
+| 简体中文 | zh-CN | [成功] [错误] [警告] [信息] |
+
+### 消息键体系
+
+所有用户可见消息都通过消息键 (message key) 获取，支持变量插值：
+
+```rust
+// 获取带变量的消息
+let msg = messages.t("snapshot.save.success", &[
+    ("short_id", "abc123"),
+    ("name", "游戏进度"),
+    ("timeline", "main"),
+    ("file_count", "15"),
+    ("size", "2.5MB"),
+]);
+
+// 输出: "Snapshot saved abc123 (游戏进度)\n  Timeline: main\n  Files: 15\n  Size: 2.5MB"
+```
+
+### 消息目录结构
+
+```
+src/core/messages/mod.rs
+├── MessageManager       # 消息管理器
+├── MessageCatalog      # 消息目录
+├── chinese_catalog()   # 中文消息定义
+└── english_catalog()   # 英文消息定义
+```
+
+### 添加新语言
+
+1. 在 `MessageManager::new()` 中加载新目录：
+```rust
+manager.load_catalog("ja", japanese_catalog());
+```
+
+2. 创建消息目录函数：
+```rust
+fn japanese_catalog() -> MessageCatalog {
+    let mut cat = MessageCatalog::new();
+    cat.add("ui.success", "成功");
+    cat.add("ui.error", "エラー");
+    // ... 更多消息
+    cat
+}
+```
+
+### 消息前缀本地化
+
+消息前缀（成功/错误/警告/信息）也从消息目录动态获取，确保 UI 输出一致性。
+
+```rust
+// print_success() 会自动使用当前语言的前缀
+print_success("操作完成");  // 输出: [成功] 操作完成  或  [Success] Operation completed
+```
+
+### 消息键命名规范
+
+- `模块.子模块.操作.状态`
+- 示例: `snapshot.save.success`, `timeline.switch.error.not_found`
+
+### 错误消息本地化
+
+错误消息同样通过消息键本地化：
+```rust
+// 使用 thiserror 的 #[error] 注解配合消息键
+#[error("{}", messages().t("common.error.not_found", &[("path", &path)))]
+```
 
 ## 构建配置
 

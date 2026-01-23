@@ -140,19 +140,35 @@ pub fn print_loading_prompt() {
 }
 
 pub fn print_success(msg: &str) {
-    msg_suc(&format!("  [成功] {}", msg));
+    let prefix = crate::core::global_messages()
+        .get("ui.success")
+        .map(|s| format!("  [{}] ", s))
+        .unwrap_or_else(|| "  [Success] ".to_string());
+    msg_suc(&format!("{}{}", prefix, msg));
 }
 
 pub fn print_error(msg: &str) {
-    msg_err(&format!("  [错误] {}", msg));
+    let prefix = crate::core::global_messages()
+        .get("ui.error")
+        .map(|s| format!("  [{}] ", s))
+        .unwrap_or_else(|| "  [Error] ".to_string());
+    msg_err(&format!("{}{}", prefix, msg));
 }
 
 pub fn print_warning(msg: &str) {
-    msg_wrn(&format!("  [警告] {}", msg));
+    let prefix = crate::core::global_messages()
+        .get("ui.warning")
+        .map(|s| format!("  [{}] ", s))
+        .unwrap_or_else(|| "  [Warning] ".to_string());
+    msg_wrn(&format!("{}{}", prefix, msg));
 }
 
 pub fn print_info(msg: &str) {
-    msg_log(&format!("  [信息] {}", msg));
+    let prefix = crate::core::global_messages()
+        .get("ui.info")
+        .map(|s| format!("  [{}] ", s))
+        .unwrap_or_else(|| "  [Info] ".to_string());
+    msg_log(&format!("{}{}", prefix, msg));
 }
 
 pub fn print_confirm(msg: &str) {
