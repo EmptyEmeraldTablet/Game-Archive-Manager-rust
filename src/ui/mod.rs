@@ -69,6 +69,11 @@ pub fn print_title() {
     msg_suc("输入 help 或 h 查看帮助，输入 q 退出\n");
 }
 
+/// Get the global message manager
+pub fn messages() -> crate::core::MessageManager {
+    crate::core::global_messages()
+}
+
 pub fn print_help() {
     println!();
     msg_suc("【使用说明】");
@@ -92,14 +97,21 @@ pub fn print_help() {
         ("snapshot list", "列出快照"),
         ("snapshot info <id>", "查看快照详情"),
         ("snapshot delete <id>", "删除快照"),
+        ("snapshot tag <id> <name>", "为快照添加标签"),
         ("timeline create <name>", "创建时间线"),
         ("timeline list", "列出时间线"),
         ("timeline switch <name>", "切换时间线"),
+        ("timeline rename <old> <new>", "重命名时间线"),
+        ("timeline current", "显示当前时间线"),
         ("restore <id>", "恢复到快照"),
         ("history", "查看历史"),
+        ("activity", "查看活动日志"),
         ("status", "查看状态"),
+        ("diff <id1> <id2>", "比较快照"),
         ("ignore <subcommand>", "忽略规则管理"),
+        ("config", "配置管理"),
         ("gc", "垃圾回收"),
+        ("doctor", "诊断问题"),
         ("help", "显示帮助"),
         ("quit / q", "退出"),
     ];
@@ -148,4 +160,44 @@ pub fn print_confirm(msg: &str) {
     print!("  {} (y/n): ", msg);
     io::stdout().flush().unwrap();
     set_color(Color::Reset);
+}
+
+/// Print success message using message key
+#[macro_export]
+macro_rules! t_success {
+    ($key:expr, $($vars:expr),*) => {
+        print_success(&crate::core::global_messages().t($key, &[$($vars),*]))
+    };
+}
+
+/// Print error message using message key
+#[macro_export]
+macro_rules! t_error {
+    ($key:expr, $($vars:expr),*) => {
+        print_error(&crate::core::global_messages().t($key, &[$($vars),*]))
+    };
+}
+
+/// Print warning message using message key
+#[macro_export]
+macro_rules! t_warning {
+    ($key:expr, $($vars:expr),*) => {
+        print_warning(&crate::core::global_messages().t($key, &[$($vars),*]))
+    };
+}
+
+/// Print info message using message key
+#[macro_export]
+macro_rules! t_info {
+    ($key:expr, $($vars:expr),*) => {
+        print_info(&crate::core::global_messages().t($key, &[$($vars),*]))
+    };
+}
+
+/// Get translated message
+#[macro_export]
+macro_rules! t {
+    ($key:expr, $($vars:expr),*) => {
+        crate::core::global_messages().t($key, &[$($vars),*])
+    };
 }
