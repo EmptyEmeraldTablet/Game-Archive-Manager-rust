@@ -110,12 +110,12 @@ impl MessageManager {
     pub fn new() -> Self {
         let mut manager = MessageManager {
             catalogs: HashMap::new(),
-            current_locale: "zh-CN".to_string(),
+            current_locale: "en".to_string(),
         };
 
-        // Load default catalog
-        manager.load_catalog("zh-CN", chinese_catalog());
+        // Load default catalogs (English first to be primary)
         manager.load_catalog("en", english_catalog());
+        manager.load_catalog("zh-CN", chinese_catalog());
 
         manager
     }
