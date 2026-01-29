@@ -19,7 +19,65 @@ Game Archive Manager v2.0 是一个用 Rust 重构的游戏存档备份管理工
 
 ## 安装
 
-### 从源码编译
+### 方法一：直接下载二进制文件（推荐）
+
+从 GitHub Releases 下载预编译的可执行文件：
+
+1. 访问 [Game Archive Manager Releases](https://github.com/EmptyEmeraldTablet/Game-Archive-Manager-rust/releases)
+
+2. 下载对应系统的版本：
+   - **Linux**: `game-archive-manager-v2.0.0-linux-x86_64.tar.gz`
+   - **macOS**: `game-archive-manager-v2.0.0-macos-universal.tar.gz`
+   - **Windows**: `game-archive-manager-v2.0.0-windows-x86_64.zip`
+
+3. 解压并安装：
+
+   **Linux/macOS:**
+   ```bash
+   # 下载并解压
+   wget https://github.com/EmptyEmeraldTablet/Game-Archive-Manager-rust/releases/download/v2.0.0/game-archive-manager-v2.0.0-linux-x86_64.tar.gz
+   tar -xzf game-archive-manager-v2.0.0-linux-x86_64.tar.gz
+
+   # 安装到系统（需要 root 权限）
+   sudo mv game-archive-manager /usr/local/bin/gam
+
+   # 验证安装
+   gam --version
+   ```
+
+   **macOS (Apple Silicon):**
+   ```bash
+   # 下载并解压
+   wget https://github.com/EmptyEmeraldTablet/Game-Archive-Manager-rust/releases/download/v2.0.0/game-archive-manager-v2.0.0-macos-aarch64.tar.gz
+   tar -xzf game-archive-manager-v2.0.0-macos-aarch64.tar.gz
+
+   # 移动到 Applications 或添加 PATH
+   mv game-archive-manager ~/Applications/
+   export PATH="~/Applications:$PATH"
+   ```
+
+   **Windows:**
+   ```powershell
+   # 使用 PowerShell 下载
+   Invoke-WebRequest -Uri "https://github.com/EmptyEmeraldTablet/Game-Archive-Manager-rust/releases/download/v2.0.0/game-archive-manager-v2.0.0-windows-x86_64.zip" -OutFile "gam.zip"
+
+   # 解压
+   Expand-Archive -Path "gam.zip" -DestinationPath "C:\Games\GAM"
+
+   # 添加到系统 PATH:
+   # 右键"此电脑" -> 属性 -> 高级系统设置 -> 环境变量
+   # 在用户变量或系统变量的 PATH 中添加: C:\Games\GAM
+   ```
+
+4. **验证安装:**
+   ```bash
+   gam --version
+   gam --help
+   ```
+
+> **提示:** 下载解压后，使用 `./install.sh --binary /path/to/game-archive-manager` 可自动安装到系统 PATH。
+
+### 方法二：从源码编译
 
 ```bash
 # 克隆项目
