@@ -26,47 +26,17 @@ Game Archive Manager v2.0 是一个用 Rust 重构的游戏存档备份管理工
 1. 访问 [Game Archive Manager Releases](https://github.com/EmptyEmeraldTablet/Game-Archive-Manager-rust/releases)
 
 2. 下载对应系统的版本：
-   - **Linux**: `game-archive-manager-v2.0.0-linux-x86_64.tar.gz`
-   - **macOS**: `game-archive-manager-v2.0.0-macos-universal.tar.gz`
-   - **Windows**: `game-archive-manager-v2.0.0-windows-x86_64.zip`
+   （当前仅提供windwos版本）
+   - **Windows**: `game-archive-manager.exe`
 
-3. 解压并安装：
+3. 安装：
 
-   **Linux/macOS:**
-   ```bash
-   # 下载并解压
-   wget https://github.com/EmptyEmeraldTablet/Game-Archive-Manager-rust/releases/download/v2.0.0/game-archive-manager-v2.0.0-linux-x86_64.tar.gz
-   tar -xzf game-archive-manager-v2.0.0-linux-x86_64.tar.gz
-
-   # 安装到系统（需要 root 权限）
-   sudo mv game-archive-manager /usr/local/bin/gam
-
-   # 验证安装
-   gam --version
-   ```
-
-   **macOS (Apple Silicon):**
-   ```bash
-   # 下载并解压
-   wget https://github.com/EmptyEmeraldTablet/Game-Archive-Manager-rust/releases/download/v2.0.0/game-archive-manager-v2.0.0-macos-aarch64.tar.gz
-   tar -xzf game-archive-manager-v2.0.0-macos-aarch64.tar.gz
-
-   # 移动到 Applications 或添加 PATH
-   mv game-archive-manager ~/Applications/
-   export PATH="~/Applications:$PATH"
-   ```
-
+  
    **Windows:**
-   ```powershell
-   # 使用 PowerShell 下载
-   Invoke-WebRequest -Uri "https://github.com/EmptyEmeraldTablet/Game-Archive-Manager-rust/releases/download/v2.0.0/game-archive-manager-v2.0.0-windows-x86_64.zip" -OutFile "gam.zip"
-
-   # 解压
-   Expand-Archive -Path "gam.zip" -DestinationPath "C:\Games\GAM"
-
+   ```
    # 添加到系统 PATH:
    # 右键"此电脑" -> 属性 -> 高级系统设置 -> 环境变量
-   # 在用户变量或系统变量的 PATH 中添加: C:\Games\GAM
+   # 在用户变量或系统变量的 PATH 中添加path/to/game-archive-manager.exe
    ```
 
 4. **验证安装:**
@@ -75,14 +45,14 @@ Game Archive Manager v2.0 是一个用 Rust 重构的游戏存档备份管理工
    gam --help
    ```
 
-> **提示:** 下载解压后，使用 `./install.sh --binary /path/to/game-archive-manager` 可自动安装到系统 PATH。
+
 
 ### 方法二：从源码编译
 
 ```bash
 # 克隆项目
 git clone https://github.com/EmptyEmeraldTablet/Game-Archive-Manager-rust.git
-cd game-archive-manager
+cd Game-Archive-Manager-rust
 
 # Release 构建
 cargo build --release
@@ -131,6 +101,8 @@ cd /path/to/your/game/saves
 
 # 初始化 GAM
 gam init --path /path/to/your/game/saves
+#或者
+gam init --path .
 
 # 或者交互式初始化
 gam init
@@ -568,7 +540,7 @@ print_success("操作完成");  // 输出: [成功] 操作完成  或  [Success]
 4. 建议定期整理不需要的快照以节省空间
 5. 时间线切换会改变后续快照的保存位置
 6. ⚠️ **请勿将 GAM 程序放在游戏存档目录内** - 否则 restore 操作可能会尝试覆盖程序本身导致错误
-
+7. ⚠️ **请勿在系统目录尝试gam init** 会炸
 ## 常见问题 (FAQ)
 
 ### Q: 快照 ID 应该怎么输入？
