@@ -33,23 +33,24 @@ impl Formatter {
         }
 
         let mut output = format!("{} 分支快照 (共 {} 个)\n", timeline_name, snapshots.len());
-        output.push_str("┌─────┬────────────────────┬──────────────────────┐\n");
-        output.push_str("│ ID  │ 时间               │ 名称                 │\n");
-        output.push_str("├─────┼────────────────────┼──────────────────────┤\n");
+        output.push_str("┌───────┬──────────┬────────────────────┬──────────────────────┐\n");
+        output.push_str("│ 序号  │   ID     │ 时间               │ 名称                 │\n");
+        output.push_str("├───────┼──────────┼────────────────────┼──────────────────────┤\n");
 
         for (i, snapshot) in snapshots.iter().enumerate() {
-            let id = if i < 9 {
-                format!(" #{} ", i + 1)
+            let num = if i < 9 {
+                format!("  {}   ", i + 1)
             } else {
-                format!("#{:<3}", i + 1)
+                format!("  {:<3}", i + 1)
             };
+            let short_id = Self::short_hash(&snapshot.id);
             let time = Self::format_time_short(snapshot.timestamp);
             let name = Self::truncate(&snapshot.name, 20);
 
-            output.push_str(&format!("│{}│ {} │ {} │\n", id, time, name));
+            output.push_str(&format!("│{}│ {} │ {} │ {} │\n", num, short_id, time, name));
         }
 
-        output.push_str("└─────┴────────────────────┴──────────────────────┘");
+        output.push_str("└───────┴──────────┴────────────────────┴──────────────────────┘");
 
         output
     }
@@ -159,7 +160,7 @@ impl Formatter {
     /// 短哈希格式
     pub fn short_hash(full_hash: &str) -> String {
         if full_hash.len() > 8 {
-            format!("{}...", &full_hash[..8])
+            (&full_hash[..8]).to_string()
         } else {
             full_hash.to_string()
         }
