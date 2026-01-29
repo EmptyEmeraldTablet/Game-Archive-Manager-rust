@@ -23,7 +23,7 @@ Game Archive Manager v2.0 是一个用 Rust 重构的游戏存档备份管理工
 
 ```bash
 # 克隆项目
-git clone https://github.com/yourusername/game-archive-manager.git
+git clone https://github.com/EmptyEmeraldTablet/Game-Archive-Manager-rust.git
 cd game-archive-manager
 
 # Release 构建
@@ -32,9 +32,36 @@ cargo build --release
 # 可执行文件位于: target/release/game-archive-manager
 ```
 
-### Windows 一键构建
+### 一键安装到系统（Linux/macOS）
 
-双击运行 `build.bat` 即可自动完成清理和构建。
+编译完成后，运行安装脚本自动添加到系统 PATH：
+
+```bash
+# 进入项目目录
+cd game-archive-manager
+
+# 运行安装脚本
+./install.sh
+
+# 需要 root 权限时会提示输入密码
+# 安装位置: /usr/local/bin/gam
+
+# 安装完成后需要重新打开终端，或执行:
+source ~/.bashrc  # 或 ~/.zshrc
+```
+
+### Windows 安装
+
+```bash
+# 交叉编译（从 Linux/macOS）
+cargo build --release --target x86_64-pc-windows-gnu
+
+# 可执行文件: target/x86_64-pc-windows-gnu/release/game-archive-manager.exe
+
+# 将 .exe 文件所在目录添加到系统 PATH:
+#   设置 -> 系统 -> 关于 -> 高级系统设置 -> 环境变量
+#   在 PATH 中添加 .exe 所在目录
+```
 
 ## 快速开始
 
